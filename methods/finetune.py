@@ -395,11 +395,9 @@ class Finetune:
 
     def mean_feature_sampling(self, exemplars, samples, num_class):
         """Prototype sampling
-
         Args:
             features ([Tensor]): [features corresponding to the samples]
             samples ([Datalist]): [datalist for a class]
-
         Returns:
             [type]: [Sampled datalist]
         """
@@ -500,7 +498,6 @@ class Finetune:
 
     def uncertainty_sampling(self, samples, num_class):
         """uncertainty based sampling
-
         Args:
             samples ([list]): [training_list + memory_list]
         """

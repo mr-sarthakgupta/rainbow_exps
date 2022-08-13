@@ -29,8 +29,12 @@ def main():
     tr_names = ""
     for trans in args.transforms:
         tr_names += "_" + trans
-    save_path = f"{args.dataset}/{args.mode}_{args.mem_manage}_{args.stream_env}_msz{args.memory_size}_rnd{args.rnd_seed}{tr_names}"
-
+    log_index = 0
+    save_path = f"{args.dataset}/{args.mode}_{args.mem_manage}_{args.stream_env}_msz{args.memory_size}_rnd{args.rnd_seed}{tr_names}_{log_index}"
+    while os.path.isfile(f"logs/{save_path}.log") == True:
+        log_index += 1
+    save_path = f"{args.dataset}/{args.mode}_{args.mem_manage}_{args.stream_env}_msz{args.memory_size}_rnd{args.rnd_seed}{tr_names}_{log_index}"
+    
     logging.config.fileConfig("./configuration/logging.conf")
     logger = logging.getLogger()
 
@@ -96,7 +100,8 @@ def main():
 
     logger.info(f"[2] Incrementally training {args.n_tasks} tasks")
     task_records = defaultdict(list)
-
+    method.first_model_save()
+            
     for cur_iter in range(args.n_tasks):
         if args.mode == "joint" and cur_iter > 0:
             return
@@ -124,7 +129,7 @@ def main():
         logger.info("[2-2] Set environment for the current task")
         method.set_current_dataset(cur_train_datalist, cur_test_datalist)
         # Increment known class for current task iteration.
-        method.before_task(cur_train_datalist, cur_iter, args.init_model, args.init_opt)
+        diff = method.before_task(cur_train_datalist, cur_iter, args.init_model, args.init_opt)
 
         # The way to handle streamed samles
         logger.info(f"[2-3] Start to train under {args.stream_env}")
@@ -136,17 +141,20 @@ def main():
                 n_epoch=args.n_epoch,
                 batch_size=args.batchsize,
                 n_worker=args.n_worker,
+                diff = diff,
             )
             if args.mode == "joint":
                 logger.info(f"joint accuracy: {task_acc}")
 
         elif args.stream_env == "online":
             # Online Train
+            # method.print_model()
             logger.info("Train over streamed data once")
             method.train(
                 cur_iter=cur_iter,
                 n_epoch=1,
                 batch_size=args.batchsize,
+                diff = diff,
                 n_worker=args.n_worker,
             )
 
@@ -161,6 +169,7 @@ def main():
                 n_epoch=args.n_epoch,
                 batch_size=args.batchsize,
                 n_worker=args.n_worker,
+                diff = diff,
             )
 
             method.after_task(cur_iter)

@@ -40,7 +40,7 @@ class RM(Finetune):
         if kwargs["mem_manage"] == "default":
             self.mem_manage = "uncertainty"
 
-    def train(self, cur_iter, n_epoch, batch_size, n_worker, n_passes=0):
+    def train(self, cur_iter, n_epoch, batch_size, n_worker, diff, n_passes=0):
         if len(self.memory_list) > 0:
             mem_dataset = ImageDataset(
                 pd.DataFrame(self.memory_list),
@@ -87,7 +87,7 @@ class RM(Finetune):
             else:  # Aand go!
                 self.scheduler.step()
 
-            train_loss, train_acc = self._train(train_loader=train_loader, memory_loader=memory_loader,
+            train_loss, train_acc = self._train(diff = diff, train_loader=train_loader, memory_loader=memory_loader,
                                                 optimizer=self.optimizer, criterion=self.criterion)
             eval_dict = self.evaluation(
                 test_loader=test_loader, criterion=self.criterion
@@ -110,7 +110,7 @@ class RM(Finetune):
 
         return best_acc, eval_dict
 
-    def update_model(self, x, y, criterion, optimizer):
+    def update_model(self, x, y, criterion, optimizer, diff):
         optimizer.zero_grad()
 
         do_cutmix = self.cutmix and np.random.rand(1) < 0.5
@@ -127,11 +127,14 @@ class RM(Finetune):
         _, preds = logit.topk(self.topk, 1, True, True)
 
         loss.backward()
+        for (p, q, r) in zip(self.model.parameters(), self.model.state_dict(), diff):
+            if torch.equal(p, self.model.state_dict()[q]) and r == q:
+                p.grad = torch.mul(p.grad, diff[r])
         optimizer.step()
         return loss.item(), torch.sum(preds == y.unsqueeze(1)).item(), y.size(0)
 
     def _train(
-        self, train_loader, memory_loader, optimizer, criterion
+        self, train_loader, memory_loader, optimizer, criterion, diff
     ):
         total_loss, correct, num_data = 0.0, 0.0, 0.0
 
@@ -157,7 +160,7 @@ class RM(Finetune):
             x = x.to(self.device)
             y = y.to(self.device)
 
-            l, c, d = self.update_model(x, y, criterion, optimizer)
+            l, c, d = self.update_model(x, y, criterion, optimizer, diff)
             total_loss += l
             correct += c
             num_data += d
