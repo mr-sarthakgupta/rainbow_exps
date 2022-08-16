@@ -134,6 +134,15 @@ class Finetune:
         logger.info(f"Increasing the head of fc {out_features} -> {new_out_features}")
 
         self.already_mem_update = False
+        first_model = torch.load('model_weights/first_model.pth')
+        diff = {}
+        for a, b in zip(first_model.state_dict(), self.model.state_dict()):
+            if a == b:
+                if torch.equal(first_model.state_dict()[a].float(), torch.zeros_like(first_model.state_dict()[a].float())):
+                    diff[a] = torch.ones_like(first_model.state_dict()[a].float())
+                else:
+                    diff[a] = first_model.state_dict()[a]*torch.reciprocal(torch.abs(first_model.state_dict()[a] - self.model.state_dict()[a]) + first_model.state_dict()[a])
+        return diff       
 
     def after_task(self, cur_iter):
         logger.info("Apply after_task")
@@ -621,3 +630,6 @@ class Finetune:
             logger.warning(f"Duplicated samples in memory: {num_dups}")
 
         return ret
+
+    def first_model_save(self):
+        torch.save(self.model, 'model_weights/first_model.pth')
