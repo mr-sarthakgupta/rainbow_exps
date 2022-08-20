@@ -129,7 +129,7 @@ class RM(Finetune):
         loss.backward()
         for (p, q, r) in zip(self.model.parameters(), self.model.state_dict(), diff):
             if torch.equal(p, self.model.state_dict()[q]) and r == q:
-                p.grad = torch.mul(p.grad, diff[r])
+                p.grad = torch.add(p.grad, torch.mean(p.grad)*diff[r])
         optimizer.step()
         return loss.item(), torch.sum(preds == y.unsqueeze(1)).item(), y.size(0)
 
