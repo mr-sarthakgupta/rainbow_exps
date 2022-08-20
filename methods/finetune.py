@@ -138,10 +138,11 @@ class Finetune:
         diff = {}
         for a, b in zip(first_model.state_dict(), self.model.state_dict()):
             if a == b:
-                if torch.equal(first_model.state_dict()[a].float(), torch.zeros_like(first_model.state_dict()[a].float())):
-                    diff[a] = torch.ones_like(first_model.state_dict()[a].float())
-                else:
-                    diff[a] = first_model.state_dict()[a]*torch.reciprocal(torch.abs(first_model.state_dict()[a] - self.model.state_dict()[a]) + first_model.state_dict()[a])
+                # if torch.equal(first_model.state_dict()[a].float(), torch.zeros_like(first_model.state_dict()[a].float())):
+                #     diff[a] = torch.ones_like(first_model.state_dict()[a].float())
+                # else:
+                #     diff[a] = first_model.state_dict()[a]*torch.reciprocal(500*torch.abs(first_model.state_dict()[a] - self.model.state_dict()[a]) + first_model.state_dict()[a])
+                diff[a] = torch.exp(-1*torch.abs(first_model.state_dict()[a] - self.model.state_dict()[a]))
         return diff       
 
     def after_task(self, cur_iter):
