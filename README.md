@@ -2,6 +2,8 @@
 
 <img src="./overview.png" width="450">
 
+This repository contains some of the experiments and alterations related to the research paper "Rainbow Memory: Continual Learning with a Memory of Diverse Samples" which I did during the course of my research internship under Professor Jonghyun Choi
+
 **Rainbow Memory: Continual Learning with a Memory of Diverse Samples**<br>
 Jihwan Bang<sup>\*</sup>, Heesu Kim<sup>\*</sup>, YoungJoon Yoo, Jung-Woo Ha, Jonghyun Choi<br>
 CVPR 2021<br>
